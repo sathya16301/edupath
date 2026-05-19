@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quiz – {{ subject.name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --blue: #0d6efd;
+            --blue-light: #e8f0fe;
+            --blue-dark: #0a58ca;
+            --text: #1a1a2e;
+            --text-muted: #6b7280;
+            --bg: #f5f7fb;
+            --white: #ffffff;
+            --border: #e5e7eb;
+            --success: #10b981;
+            --success-light: #d1fae5;
+            --danger: #ef4444;
+            --danger-light: #fee2e2;
+            --sidebar-width: 240px;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ── SIDEBAR (reused from home) ── */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--white);
+            border-right: 1px solid var(--border);
+            height: 100vh;
+            position: fixed;
+            top: 0; left: 0;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .sidebar-logo {
+            padding: 24px 20px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-logo a {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.1rem;
+            color: var(--blue);
+            line-height: 1.3;
+            display: block;
+            text-decoration: none;
+        }
+
+        .sidebar-section { padding: 20px 16px 8px; }
+
+        .sidebar-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            padding: 0 8px;
+            margin-bottom: 6px;
+        }
+
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: var(--text);
+            padding: 9px 12px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            transition: background 0.15s, color 0.15s;
+            margin-bottom: 2px;
+        }
+
+        .sidebar-logo a:hover { background: none; color: var(--blue); }
+        .sidebar a:hover { background: var(--blue-light); color: var(--blue); }
+
+        .sidebar-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: var(--blue);
+            opacity: 0.35;
+            flex-shrink: 0;
+        }
+
+        .sidebar-bottom {
+            margin-top: auto;
+            padding: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn-logout {
+            width: 100%;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            transition: all 0.15s;
+        }
+
+        .btn-logout:hover { background: #fee2e2; color: #ef4444; border-color: #fca5a5; }
+
+        /* ── MAIN ── */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            min-width: 0;
+            padding: 48px;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        /* ── BACK LINK ── */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            margin-bottom: 28px;
+            transition: color 0.15s;
+        }
+
+        .back-link:hover { color: var(--blue); }
+
+        /* ── QUIZ HEADER ── */
+        .quiz-header {
+            margin-bottom: 36px;
+        }
+
+        .quiz-header .subject-tag {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--blue);
+            background: var(--blue-light);
+            padding: 3px 10px;
+            border-radius: 99px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .quiz-header h1 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.8rem;
+            font-weight: 400;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+
+        .quiz-header p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* ── SCORE CARD ── */
+        .score-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 36px;
+            text-align: center;
+            margin-bottom: 36px;
+            animation: fadeUp 0.4s ease;
+        }
+
+        .score-card.passed { border-color: var(--success); background: var(--success-light); }
+        .score-card.failed { border-color: #fbbf24; background: #fef3c7; }
+
+        .score-big {
+            font-family: 'DM Serif Display', serif;
+            font-size: 3.5rem;
+            color: var(--text);
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+
+        .score-card.passed .score-big { color: var(--success); }
+        .score-card.failed .score-big { color: #d97706; }
+
+        .score-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        .score-status {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .score-card.passed .score-status { color: var(--success); }
+        .score-card.failed .score-status { color: #d97706; }
+
+        .score-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            text-decoration: none;
+            border: none;
+            transition: all 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary { background: var(--blue); color: white; }
+        .btn-primary:hover { background: var(--blue-dark); }
+        .btn-outline { background: white; color: var(--text); border: 1px solid var(--border); }
+        .btn-outline:hover { background: var(--bg); }
+
+        /* ── PROGRESS BAR ── */
+        .quiz-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            gap: 16px;
+        }
+
+        .questions-count {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .quiz-progress-bar {
+            flex: 1;
+            height: 4px;
+            background: var(--border);
+            border-radius: 99px;
+            overflow: hidden;
+        }
+
+        .quiz-progress-fill {
+            height: 100%;
+            background: var(--blue);
+            border-radius: 99px;
+        }
+
+        /* ── QUESTIONS ── */
+        .questions-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .question-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            animation: fadeUp 0.3s ease both;
+        }
+
+        .question-number {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--blue);
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            margin-bottom: 8px;
+        }
+
+        .question-text {
+            font-size: 0.97rem;
+            font-weight: 500;
+            line-height: 1.55;
+            margin-bottom: 18px;
+            color: var(--text);
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .option-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.88rem;
+            transition: all 0.15s;
+            line-height: 1.4;
+            background: var(--bg);
+            user-select: none;
+        }
+
+        .option-label:hover {
+            border-color: var(--blue);
+            background: var(--blue-light);
+            color: var(--blue);
+        }
+
+        .option-label input[type="radio"] {
+            accent-color: var(--blue);
+            width: 15px;
+            height: 15px;
+            flex-shrink: 0;
+        }
+
+        .option-label input[type="radio"]:checked ~ * { color: var(--blue); }
+
+        /* Selected state via JS */
+        .option-label.selected {
+            border-color: var(--blue);
+            background: var(--blue-light);
+            color: var(--blue);
+        }
+
+        /* Result states */
+        .option-label.correct {
+            border-color: var(--success);
+            background: var(--success-light);
+            color: #065f46;
+            font-weight: 600;
+            pointer-events: none;
+        }
+
+        .option-label.wrong {
+            border-color: var(--danger);
+            background: var(--danger-light);
+            color: #991b1b;
+            font-weight: 600;
+            pointer-events: none;
+        }
+
+        .option-label.correct .answer-badge {
+            background: var(--success);
+            color: white;
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 99px;
+            margin-left: auto;
+            white-space: nowrap;
+        }
+
+        .option-label.wrong .answer-badge {
+            background: var(--danger);
+            color: white;
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 99px;
+            margin-left: auto;
+            white-space: nowrap;
+        }
+
+        /* ── SUBMIT ── */
+        .quiz-footer {
+            margin-top: 32px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-submit {
+            padding: 13px 36px;
+            background: var(--blue);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.1s;
+        }
+
+        .btn-submit:hover { background: var(--blue-dark); transform: translateY(-1px); }
+        .btn-submit:active { transform: translateY(0); }
+
+        /* ── EMPTY ── */
+        .empty-quiz {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 14px;
+            border: 1px dashed var(--border);
+            color: var(--text-muted);
+        }
+
+        .empty-quiz p { font-size: 0.9rem; margin-top: 8px; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 640px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; padding: 24px; max-width: 100%; }
+            .options-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <div class="sidebar-logo">
+        <a href="{% url 'home' %}">Structured<br>Learning System</a>
+    </div>
+    <div class="sidebar-section">
+        <div class="sidebar-label">Categories</div>
+        <a href="{% url 'home' %}#core"><span class="sidebar-dot"></span> Core</a>
+        <a href="{% url 'home' %}#theory"><span class="sidebar-dot"></span> Theory</a>
+        <a href="{% url 'home' %}#allied"><span class="sidebar-dot"></span> Allied</a>
+        <a href="{% url 'home' %}#emerging"><span class="sidebar-dot"></span> Emerging</a>
+    </div>
+
+    {% if user.is_authenticated %}
+        <div class="sidebar-bottom">
+            <form action="{% url 'logout' %}" method="post">
+                {% csrf_token %}
+                <button class="btn-logout" type="submit">Sign out</button>
+            </form>
+        </div>
+    {% endif %}
+</div>
+
+<!-- MAIN -->
+<div class="main-content">
+
+    <a href="{% url 'subject_detail' subject.id %}" class="back-link">
+        ← Back to {{ subject.name }}
+    </a>
+
+    <div class="quiz-header">
+        <div class="subject-tag">{{ subject.category }}</div>
+        <h1>{{ subject.name }} Quiz</h1>
+        <p>Answer all questions and submit to see your score.</p>
+    </div>
+
+    <!-- SCORE RESULT -->
+    {% if score is not None %}
+        <div class="score-card {% if passed %}passed{% else %}failed{% endif %}">
+            <div class="score-big">{{ score }}/{{ total }}</div>
+            <div class="score-label">Questions correct</div>
+            <div class="score-status">
+                {% if score == total %}
+                    🎉 Perfect Score!
+                {% elif passed %}
+                    ✓ Passed
+                {% else %}
+                    Keep practicing!
+                {% endif %}
+            </div>
+            <div class="score-actions">
+                <a href="{% url 'quiz' subject.id %}" class="btn btn-primary">Retake Quiz</a>
+                <a href="{% url 'subject_detail' subject.id %}" class="btn btn-outline">Back to Subject</a>
+                <a href="{% url 'home' %}" class="btn btn-outline">Home</a>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- QUESTIONS -->
+    {% if quiz %}
+        <div class="quiz-meta">
+            <span class="questions-count">{{ quiz|length }} question{{ quiz|length|pluralize }}</span>
+            <div class="quiz-progress-bar">
+                <div class="quiz-progress-fill" style="width: 0%" id="progressFill"></div>
+            </div>
+        </div>
+
+        <form method="POST" id="quizForm">
+            {% csrf_token %}
+            <div class="questions-wrap">
+
+                {% if score is not None %}
+                    {% for r in results %}
+                    <div class="question-card" style="animation-delay: {{ forloop.counter0 }}00ms">
+                        <div class="question-number">Question {{ forloop.counter }}</div>
+                        <div class="question-text">{{ r.question }}</div>
+                        <div class="options-grid">
+                            <label class="option-label {{ r.opt1_class }}">
+                                <input type="radio" name="{{ r.id }}" value="{{ r.option1 }}" disabled
+                                    {% if r.user == r.option1 %}checked{% endif %}>
+                                {{ r.option1 }}
+                                {% if r.option1 == r.correct %}<span class="answer-badge">✓ Correct</span>
+                                {% elif r.user == r.option1 %}<span class="answer-badge">✗ Wrong</span>{% endif %}
+                            </label>
+                            <label class="option-label {{ r.opt2_class }}">
+                                <input type="radio" name="{{ r.id }}" value="{{ r.option2 }}" disabled
+                                    {% if r.user == r.option2 %}checked{% endif %}>
+                                {{ r.option2 }}
+                                {% if r.option2 == r.correct %}<span class="answer-badge">✓ Correct</span>
+                                {% elif r.user == r.option2 %}<span class="answer-badge">✗ Wrong</span>{% endif %}
+                            </label>
+                            <label class="option-label {{ r.opt3_class }}">
+                                <input type="radio" name="{{ r.id }}" value="{{ r.option3 }}" disabled
+                                    {% if r.user == r.option3 %}checked{% endif %}>
+                                {{ r.option3 }}
+                                {% if r.option3 == r.correct %}<span class="answer-badge">✓ Correct</span>
+                                {% elif r.user == r.option3 %}<span class="answer-badge">✗ Wrong</span>{% endif %}
+                            </label>
+                            <label class="option-label {{ r.opt4_class }}">
+                                <input type="radio" name="{{ r.id }}" value="{{ r.option4 }}" disabled
+                                    {% if r.user == r.option4 %}checked{% endif %}>
+                                {{ r.option4 }}
+                                {% if r.option4 == r.correct %}<span class="answer-badge">✓ Correct</span>
+                                {% elif r.user == r.option4 %}<span class="answer-badge">✗ Wrong</span>{% endif %}
+                            </label>
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                {% else %}
+                    {% for q in quiz %}
+                    <div class="question-card" style="animation-delay: {{ forloop.counter0 }}00ms">
+                        <div class="question-number">Question {{ forloop.counter }}</div>
+                        <div class="question-text">{{ q.question }}</div>
+                        <div class="options-grid">
+                            <label class="option-label">
+                                <input type="radio" name="{{ q.id }}" value="{{ q.option1 }}">
+                                {{ q.option1 }}
+                            </label>
+                            <label class="option-label">
+                                <input type="radio" name="{{ q.id }}" value="{{ q.option2 }}">
+                                {{ q.option2 }}
+                            </label>
+                            <label class="option-label">
+                                <input type="radio" name="{{ q.id }}" value="{{ q.option3 }}">
+                                {{ q.option3 }}
+                            </label>
+                            <label class="option-label">
+                                <input type="radio" name="{{ q.id }}" value="{{ q.option4 }}">
+                                {{ q.option4 }}
+                            </label>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+
+            </div>
+
+            {% if score is None %}
+            <div class="quiz-footer">
+                <button type="submit" class="btn-submit">Submit Quiz →</button>
+            </div>
+            {% endif %}
+        </form>
+
+    {% else %}
+        <div class="empty-quiz">
+            <div style="font-size:2rem;">📭</div>
+            <p>No questions available for this subject yet.</p>
+        </div>
+    {% endif %}
+
+</div>
+
+<script>
+    // ── Progress bar ──
+    const form = document.getElementById('quizForm');
+    if (form) {
+        const total = {{ quiz|length }};
+        const fill = document.getElementById('progressFill');
+
+        function updateProgress() {
+            const answered = new Set(
+                [...form.querySelectorAll('input[type=radio]:checked')]
+                    .map(r => r.name)
+            ).size;
+            if (fill) fill.style.width = (answered / total * 100) + '%';
+        }
+
+        form.addEventListener('change', updateProgress);
+
+        // Highlight selected option
+        form.querySelectorAll('input[type=radio]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                document.querySelectorAll(`input[name="${this.name}"]`).forEach(r => {
+                    r.closest('.option-label').classList.remove('selected');
+                });
+                this.closest('.option-label').classList.add('selected');
+            });
+        });
+    }
+
+    // ── Confetti on pass ──
+    {% if passed %}
+    (function() {
+        const canvas = document.createElement('canvas');
+        canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;';
+        document.body.appendChild(canvas);
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const COLORS = ['#0d6efd','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4'];
+        const pieces = Array.from({length: 120}, () => ({
+            x: Math.random() * canvas.width,
+            y: Math.random() * -canvas.height,
+            r: Math.random() * 7 + 4,
+            d: Math.random() * 120 + 60,
+            color: COLORS[Math.floor(Math.random() * COLORS.length)],
+            tilt: Math.random() * 10 - 10,
+            tiltSpeed: Math.random() * 0.07 + 0.05,
+            tiltAngle: 0,
+            speed: Math.random() * 2 + 1.5,
+            shape: Math.random() > 0.5 ? 'circle' : 'rect',
+        }));
+
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            pieces.forEach(p => {
+                p.tiltAngle += p.tiltSpeed;
+                p.y += p.speed;
+                p.tilt = Math.sin(p.tiltAngle) * 12;
+                if (p.y > canvas.height) {
+                    p.y = -10;
+                    p.x = Math.random() * canvas.width;
+                }
+                ctx.beginPath();
+                ctx.fillStyle = p.color;
+                if (p.shape === 'circle') {
+                    ctx.arc(p.x + p.tilt, p.y, p.r, 0, Math.PI * 2);
+                } else {
+                    ctx.rect(p.x + p.tilt, p.y, p.r * 1.5, p.r * 0.7);
+                }
+                ctx.fill();
+            });
+            frame++;
+            if (frame < 300) requestAnimationFrame(draw);
+            else { canvas.remove(); }
+        }
+        draw();
+    })();
+    {% endif %}
+</script>
+
+</body>
+</html>

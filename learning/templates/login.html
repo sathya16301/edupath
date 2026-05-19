@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login - Structured Learning</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'DM Sans', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(135deg, #0d6efd, #6f42c1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: float 15s infinite ease-in-out;
+        }
+
+        .shape:nth-child(1) {
+            width: 200px; height: 200px;
+            background: #ffffff;
+            top: 10%; left: 15%;
+            animation-duration: 18s;
+        }
+
+        .shape:nth-child(2) {
+            width: 300px; height: 300px;
+            background: #ffffff;
+            bottom: 10%; right: 10%;
+            animation-duration: 22s;
+        }
+
+        .shape:nth-child(3) {
+            width: 150px; height: 150px;
+            background: #ffffff;
+            bottom: 30%; left: 40%;
+            animation-duration: 16s;
+        }
+
+        @keyframes float {
+            0%   { transform: translateY(0px); }
+            50%  { transform: translateY(-40px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .card {
+            position: relative;
+            z-index: 10;
+            width: 400px;
+            padding: 40px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            color: white;
+        }
+
+        h2 {
+            font-family: 'DM Serif Display', serif;
+            font-weight: 400;
+            font-size: 1.8rem;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 0.82rem;
+            letter-spacing: 0.03em;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px 12px;
+            margin-top: 5px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border: none;
+            font-size: 0.9rem;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        input:focus { outline: none; }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: white;
+            color: #0d6efd;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.92rem;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+
+        button:hover { background-color: #f1f1f1; }
+
+        .bottom-text {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.88rem;
+        }
+
+        .bottom-text a {
+            color: white;
+            font-weight: 600;
+            text-decoration: underline;
+        }
+
+        .errorlist {
+            color: #ffdddd;
+            font-size: 0.8rem;
+            list-style: none;
+            padding-left: 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="shape"></div>
+<div class="shape"></div>
+<div class="shape"></div>
+
+<div class="card">
+    <h2>Login</h2>
+    <form method="post">
+        {% csrf_token %}
+        <label>Username</label>
+        {{ form.username }}
+        {{ form.username.errors }}
+        <label>Password</label>
+        {{ form.password }}
+        {{ form.password.errors }}
+        <button type="submit">Login</button>
+    </form>
+    <div class="bottom-text">
+        Don't have an account? <a href="{% url 'register' %}">Register</a>
+    </div>
+</div>
+
+</body>
+</html>
